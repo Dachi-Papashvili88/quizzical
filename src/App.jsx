@@ -1,34 +1,65 @@
-import { useState } from 'react'
-import reactLogo from './assets/react.svg'
-import viteLogo from '/vite.svg'
+import React, { useEffect, useState } from "react";
 
-function App() {
-  const [count, setCount] = useState(0)
+import Quiz from "./Quiz";
+
+export default function App() {
+  const [quiz, setQuiz] = useState([]);
+  const [isHeld, setIsHeld] = useState(false);
+  const [quizName, setQuizName] = useState("Quizzical");
+  const [isClicked, setIsClicked] = useState(false);
+
+  useEffect(() => {
+    if (isHeld) {
+      fetch("https://opentdb.com/api.php?amount=10")
+        .then((res) => res.json())
+        .then((data) => {
+          console.log(data.results);
+          setQuiz(data.results);
+        });
+    }
+  }, [isHeld]);
+
+  const renderQuiz = quiz.map((quizItem, index) => {
+    const results = quizItem.incorrect_answers.concat(quizItem.correct_answer);
+    const optionsCount = results.length;
+
+    return (
+      <Quiz
+        key={index}
+        question={quizItem.question}
+        results={results}
+        isClicked={isClicked}
+        optionsCount={optionsCount}
+        correct={quizItem.correct_answer}
+      />
+    );
+  });
+
+  function handleClick() {
+    setIsHeld(true);
+    setQuizName("");
+  }
+
+  function handleAnswers() {
+    setIsClicked(true);
+  }
 
   return (
-    <>
-      <div>
-        <a href="https://vitejs.dev" target="_blank">
-          <img src={viteLogo} className="logo" alt="Vite logo" />
-        </a>
-        <a href="https://react.dev" target="_blank">
-          <img src={reactLogo} className="logo react" alt="React logo" />
-        </a>
-      </div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
+    <main>
+      <h1 className="main">{quizName}</h1>
+      {quiz.length === 0 ? (
+        <button className="quizz-button" onClick={handleClick}>
+          Start Quiz
         </button>
-        <p>
-          Edit <code>src/App.jsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React logos to learn more
-      </p>
-    </>
-  )
-}
+      ) : (
+        renderQuiz
+      )}
 
-export default App
+      {quiz.length > 0 && (
+        <button className="check-btn" onClick={handleAnswers}>
+          Check answers
+        </button>
+      )}
+    </main>
+  );
+}
